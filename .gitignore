@@ -1,8 +1,9 @@
 /bin
-/.idea/workspace.xml
+/.idea/
 /build
 /dist
 /WebContent/WEB-INF/lib/smithers2.jar
+/*.iml
 
 *.class
 
