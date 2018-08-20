@@ -20,6 +20,8 @@
 */
 package com.noterik.bart.fs.fscommand.dynamic.playlist.util;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -28,6 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SBFReader {
+	private static final Logger log = Logger.getLogger(SBFReader.class);
 	
 	private static final int nHeader = 64;
 	private static final int nColHeader = 32;
@@ -46,7 +49,7 @@ public class SBFReader {
 		getSBFVersion(header);
 		
 		if(dataFile.getVersion().equals("")) {
-			System.out.println("Unknown file format found or new version");
+			log.debug("Unknown file format found or new version");
 			return;
 		}
 		
@@ -205,14 +208,14 @@ public class SBFReader {
 		
 		int arrIdx = iCol-1;
 		long size = dataFile.getRows(arrIdx);
-		System.out.println("Data for col " + dataFile.getDataColumns(arrIdx) + "/" + dataFile.getUnitColumns(arrIdx) + ":");
+		log.debug("Data for col " + dataFile.getDataColumns(arrIdx) + "/" + dataFile.getUnitColumns(arrIdx) + ":");
 		
 		
 		if(dataFile.dataLoaded(arrIdx)) {
 			return dataFile.getDATA(arrIdx);
 		}
 		
-		System.out.println("GETTING DATA FOR COL: " + Integer.toString(iCol));
+		log.debug("GETTING DATA FOR COL: " + Integer.toString(iCol));
 		
 		float[] data = new float[(int) size];
 		String filename = dataFile.getFilename();
@@ -233,7 +236,7 @@ public class SBFReader {
 	            
 	            data[i-1] = value;
 	            
-	            //System.out.println(Integer.toString(i) + ": " + Float.toString(value));
+	            //log.debug(Integer.toString(i) + ": " + Float.toString(value));
 	            
 			}
 			

@@ -24,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
+import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.Element;
 
@@ -31,6 +32,7 @@ import com.noterik.bart.fs.LazyHomer;
 import com.noterik.bart.fs.fsxml.FSXMLRequestHandler;
 
 public class DiskImporter {
+	private static final Logger log = Logger.getLogger(DiskImporter.class);
 	
 	public static void importSmithersNode(String uri) {
 		Document nodeXML = FSXMLRequestHandler.instance().getNodeProperties(uri, false);
@@ -43,7 +45,7 @@ public class DiskImporter {
 				String l[] = importurl.split(",");
 				String target = l[0];
 				String source = l[1];	
-				System.out.println("IMPORTING NODES TO="+target+" SOURCE="+source);
+				log.debug("IMPORTING NODES TO="+target+" SOURCE="+source);
 
 				LazyHomer.send("TRACE", importurl, "Starting import");
 				String path = "/springfield/smithers/import/"+source;
@@ -53,7 +55,7 @@ public class DiskImporter {
 				importCloud(path,target);
 			}
 		} else {
-			System.out.println("IMPORT NODE NOT VALID ("+uri+")");
+			log.debug("IMPORT NODE NOT VALID ("+uri+")");
 		}
 	}
 
@@ -117,7 +119,7 @@ public class DiskImporter {
 					}
 					body += "</properties></fsxml>";
 					body = header+body;
-		    		System.out.println("HEADER="+header+" "+uri+child.getName());
+		    		log.debug("HEADER="+header+" "+uri+child.getName());
 					FSXMLRequestHandler.instance().handlePUT(uri+child.getName()+"/properties",body);
 					
 					// so its a directory how cool so there is subs ! 

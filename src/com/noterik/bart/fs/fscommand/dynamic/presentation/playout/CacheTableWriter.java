@@ -25,12 +25,14 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Iterator;
 
+import org.apache.log4j.Logger;
 import org.dom4j.Element;
 import org.dom4j.Node;
 
 import com.noterik.bart.fs.fsxml.FSXMLRequestHandler;
 
 public class CacheTableWriter extends Thread {
+	private static final Logger log = Logger.getLogger(CacheTableWriter.class);
 	
 	private CacheTableReader reader = null;
 	private int mb = 1024*1024;
@@ -45,7 +47,7 @@ public class CacheTableWriter extends Thread {
 		while (running) {
 			try {
 				sleep(10*1000);
-				//System.out.println("FR="+reader.fullyLoaded()+" C="+cache.getCachedUrls());
+				//log.debug("FR="+reader.fullyLoaded()+" C="+cache.getCachedUrls());
 				if (reader.fullyLoaded() && cache.getCachedUrls()!=null) {
 					
 					String body = "<fsxml><properties><list>";
@@ -53,7 +55,7 @@ public class CacheTableWriter extends Thread {
 					for(Iterator<String> iter = cache.getCachedUrls(); iter.hasNext(); ) {
 						String url = (String)iter.next();
 						url = url.replace(",", ";");
-						//System.out.println("URL="+url);
+						//log.debug("URL="+url);
 						body+=url;
 						if (iter.hasNext()) body+=",";
 					}
@@ -62,7 +64,7 @@ public class CacheTableWriter extends Thread {
 					String hostname = InetAddress.getLocalHost().toString();
 					int pos = hostname.indexOf("/");
 					if (pos!=-1) hostname=hostname.substring(pos+1);
-					//System.out.println("HOSTNAME="+hostname+" "+body);
+					//log.debug("HOSTNAME="+hostname+" "+body);
 					FSXMLRequestHandler.instance().handlePUT("/domain/webtv/tmp/cache/dataset/"+hostname+"/properties",body);;
 				}
 				Runtime runtime = Runtime.getRuntime();
@@ -71,19 +73,19 @@ public class CacheTableWriter extends Thread {
 				long freemem = runtime.freeMemory() / mb;
 				long usedmem = (runtime.totalMemory() - runtime.freeMemory()) / mb;
 				long maxmem = runtime.maxMemory() / mb;
-				//System.out.println("totalmem = "+totalmem+"MB");
-				//System.out.println("freemem = "+freemem+"MB");
-				//System.out.println("usedmem = "+usedmem+"MB");
-				//System.out.println("maxmem = "+maxmem+"MB");
+				//log.debug("totalmem = "+totalmem+"MB");
+				//log.debug("freemem = "+freemem+"MB");
+				//log.debug("usedmem = "+usedmem+"MB");
+				//log.debug("maxmem = "+maxmem+"MB");
 				sleep(50*1000);
 			} catch (InterruptedException ex) {
 				// break out of the loop without a error
 			} catch(Exception e) {
-				System.out.println("Can't sleep in CacheTableWriter."+e);
+				log.debug("Can't sleep in CacheTableWriter."+e);
 			//	e.printStackTrace();
 			}
 		}
-		System.out.println("Smithers: shutting down CacheTableWriter");
+		log.debug("shutting down CacheTableWriter");
 	}
 	
 	public void destroy() {

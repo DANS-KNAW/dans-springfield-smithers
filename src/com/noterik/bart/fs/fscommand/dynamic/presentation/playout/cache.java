@@ -33,13 +33,12 @@ import org.dom4j.Element;
 
 import com.noterik.bart.fs.LazyHomer;
 import com.noterik.bart.fs.cloudexporter.DiskExporter;
-import com.noterik.bart.fs.cloudimporter.DefaultImporter;
 import com.noterik.bart.fs.fsxml.FSXMLRequestHandler;
 
 
 public class cache {
 	/** Logger */
-	private static Logger logger = Logger.getLogger(cache.class);
+	private static Logger log = Logger.getLogger(cache.class);
 	private static LRUMap cached = new LRUMap(3000);
 	private static HashMap<String,String> refers = new HashMap<String,String>();
 	private static HashMap<String,ArrayList<String>> paramref = new HashMap<String,ArrayList<String>>();
@@ -89,7 +88,7 @@ public class cache {
             String sends = myip+":"+LazyHomer.getSmithersPort()+":"+LazyHomer.getPort()+":"+LazyHomer.getRole();
             CacheMulticastSender.send(sends, "INFO", "ALIVE");
 		}catch (Exception e){
-			System.out.println("Exception ="+e.getMessage());
+			log.debug("Exception ="+e.getMessage());
 		}
     }
 
@@ -100,11 +99,11 @@ public class cache {
 		totalreq++;
 		Document result = (Document)cached.get(url);
 		if (result==null) {
-			if (debuglevel.equals("high")) System.out.println("CACHE MISS="+url);	
+			if (debuglevel.equals("high")) log.debug("CACHE MISS="+url);
 			return null;
 		} else {
 			hitreq++;
-			if (debuglevel.equals("high")) System.out.println("CACHE HIT= "+url);
+			if (debuglevel.equals("high")) log.debug("CACHE HIT= "+url);
 			if (result==empty) return null;
 			result = (Document)result.clone();
 			return result;
@@ -138,14 +137,14 @@ public class cache {
 			cached.put(url+params, empty);
 			return;
 		}
-		//System.out.println("PUTPARAMS");
+		//log.debug("PUTPARAMS");
 		cached.put(url+params, (Document)result.clone());
 		setCacheWatchers(url+params,result.asXML());
 		setParametersWatchers(url,params);
 	}
 	
 	private static void setParametersWatchers(String url,String params) {
-		System.out.println("PW="+url+" "+params);
+		log.debug("PW="+url+" "+params);
 		// try to get the list we already have for this base url
 		ArrayList<String> curlist = paramref.get(url);
 		if (curlist!=null) {
@@ -157,7 +156,7 @@ public class cache {
 			curlist.add(params);
 			paramref.put(url, curlist);
 		}
-		System.out.println("CL="+curlist);
+		log.debug("CL="+curlist);
 	}
 	
 	
@@ -166,7 +165,7 @@ public class cache {
 		while (pos!=-1) {
 			int endpos = body.indexOf("\"",pos+10);
 			String refer = body.substring(pos+9, endpos);
-			if (debuglevel.equals("high")) System.out.println("REFER="+refer+" SOURCE="+url);
+			if (debuglevel.equals("high")) log.debug("REFER="+refer+" SOURCE="+url);
 			refers.put(refer, url);
 			pos = body.indexOf("referid=",endpos+1);
 		}
@@ -201,8 +200,8 @@ public class cache {
 	}
 	
 	public static void signalPut(String adr, String uri) {
-		if (debuglevel.equals("high")) System.out.println("SIGNAL PUT = "+adr.toString()+" U="+uri);
-		//System.out.println("SIGNAL PUT = "+adr.toString()+" U="+uri);
+		if (debuglevel.equals("high")) log.debug("SIGNAL PUT = "+adr.toString()+" U="+uri);
+		//log.debug("SIGNAL PUT = "+adr.toString()+" U="+uri);
 		
 		// do we have some of this in cache ?
 		if (uri.indexOf("/domain/webtv/config/cache/presentationquickstart/1")!=-1) {
@@ -217,46 +216,46 @@ public class cache {
 	} 
 	
 	public static void readCacheConfig() {
-		System.out.println("READ CACHENODE");
+		log.debug("READ CACHENODE");
 		Document cachenode = FSXMLRequestHandler.instance().getNodeProperties("/domain/webtv/config/cache/presentationquickstart/1", false);
-		System.out.println("CACHENODE="+cachenode);
+		log.debug("CACHENODE="+cachenode);
 		if (cachenode != null) {
 			Element activenode = (Element)cachenode.selectSingleNode("/fsxml/presentationquickstart[@id='1']/properties/active");
 			if (activenode.getText().equals("true")) {
 				active = true;
-				logger.debug("CACHE TURNED ON");
+				log.debug("CACHE TURNED ON");
 			} else {
 				active = false;
-				logger.debug("CACHE TURNED OFF");
+				log.debug("CACHE TURNED OFF");
 			}
 			Element debuglevelnode = (Element)cachenode.selectSingleNode("/fsxml/presentationquickstart[@id='1']/properties/debuglevel");
 			if (debuglevelnode.getText().equals("high")) {
 				debuglevel = "high";
 				FSXMLRequestHandler.debuglevel = "high";
-				logger.debug("CACHE DEBUG LEVEL HIGH");
+				log.debug("CACHE DEBUG LEVEL HIGH");
 			} else {
 				debuglevel = "off";
 				FSXMLRequestHandler.debuglevel = "off";
-				logger.debug("CACHE DEBUG LEVEL OFF");
+				log.debug("CACHE DEBUG LEVEL OFF");
 			}
 		} else {
-			logger.debug("CACHE CONFIG MISSING");
+			log.debug("CACHE CONFIG MISSING");
 			//DefaultImporter.importDefaultCloud();
 		}
 
 	}
 	
 	public static void signalPost(String adr, String uri) {
-		if (debuglevel.equals("high")) System.out.println("SIGNAL POST = "+adr.toString()+" U="+uri);
-		//System.out.println("SIGNAL POST = "+adr.toString()+" U="+uri);
+		if (debuglevel.equals("high")) log.debug("SIGNAL POST = "+adr.toString()+" U="+uri);
+		//log.debug("SIGNAL POST = "+adr.toString()+" U="+uri);
 		
 		// do we have some of this in cache ?
 		deleteCacheRecursive(uri,0);
 	}
 	
 	public static void signalDelete(String adr, String uri) {
-		if (debuglevel.equals("high")) System.out.println("SIGNAL DELETE = "+adr.toString()+" U="+uri);
-		//System.out.println("SIGNAL DELETE = "+adr.toString()+" U="+uri);
+		if (debuglevel.equals("high")) log.debug("SIGNAL DELETE = "+adr.toString()+" U="+uri);
+		//log.debug("SIGNAL DELETE = "+adr.toString()+" U="+uri);
 		
 		// do we have some of this in cache ?
 		deleteCacheRecursive(uri,0);
@@ -271,20 +270,20 @@ public class cache {
 				cached.remove(uri);
 				
 				
-				if (debuglevel.equals("high")) System.out.println(depth+" removed main="+uri);
-				//System.out.println(depth+" removed main="+uri);
+				if (debuglevel.equals("high")) log.debug(depth+" removed main="+uri);
+				//log.debug(depth+" removed main="+uri);
 				// now was this uri also a referid somewhere ? only works for one (daniel?)
 				String refer = refers.get(uri);
 				if (refer!=null) {
 					refers.remove(uri); // remove it
 					// call it for subchilds
 					if (depth<10) {				
-						if (debuglevel.equals("high")) System.out.println(depth+" checking refer="+refer);
-						//System.out.println(depth+" checking refer="+refer);
+						if (debuglevel.equals("high")) log.debug(depth+" checking refer="+refer);
+						//log.debug(depth+" checking refer="+refer);
 
 						deleteCacheRecursive(refer,depth++);
 					} else {
-						System.out.println("***** RECURSIVE ERROR IN CACHE REACHED 10");
+						log.debug("***** RECURSIVE ERROR IN CACHE REACHED 10");
 					}
 				}
 			}
@@ -294,7 +293,7 @@ public class cache {
 			if (list!=null) {
 				for (Iterator<String> i = list.iterator(); i.hasNext();) {
 					String p = i.next();
-					//System.out.println("REMOVE PARAM="+uri+p);
+					//log.debug("REMOVE PARAM="+uri+p);
 					cached.remove(uri+p);
 					paramref.remove(uri);
 				}
@@ -302,7 +301,7 @@ public class cache {
 			
 			uri = uri.substring(0,pos);
 			pos = uri.lastIndexOf("/");
-			//System.out.println(depth+" new uri="+uri);
+			//log.debug(depth+" new uri="+uri);
 		}
 	}
 	
@@ -332,7 +331,7 @@ public class cache {
 	}
 	
 	public static void destroy() {		
-		System.out.println("Smithers: shutting down PresentationQuickStart Cache");
+		log.debug("shutting down PresentationQuickStart Cache");
 		if (cachewriter!=null) cachewriter.destroy();
 		if (receiver!=null) receiver.destroy();
 	}
