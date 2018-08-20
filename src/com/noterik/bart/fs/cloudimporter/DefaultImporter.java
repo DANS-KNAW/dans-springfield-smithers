@@ -24,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
+import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.Element;
 
@@ -31,15 +32,16 @@ import com.noterik.bart.fs.LazyHomer;
 import com.noterik.bart.fs.fsxml.FSXMLRequestHandler;
 
 public class DefaultImporter {
+	private static final Logger log = Logger.getLogger(DefaultImporter.class);
 	
 	public static void importDefaultCloud() {
-		System.out.println("Starting default cloud import");
+		log.debug("Starting default cloud import");
 		String path = "/springfield/smithers/default/domain";
 		if (LazyHomer.isWindows()) {
 			path = "c:\\springfield\\smithers\\default\\domain";
 		}
 		importCloud(path,"/domain/");
-		System.out.println("\nFinished default cloud import");
+		log.debug("\nFinished default cloud import");
 	}
 	
 	
@@ -102,7 +104,7 @@ public class DefaultImporter {
 					}
 					body += "</properties></fsxml>";
 					body = header+body;
-		    	//	System.out.println("HEADER="+header+" "+uri+child.getName());
+		    	//	log.debug("HEADER="+header+" "+uri+child.getName());
 					FSXMLRequestHandler.instance().handlePUT(uri+child.getName()+"/properties",body);
 					
 					// so its a directory how cool so there is subs ! 

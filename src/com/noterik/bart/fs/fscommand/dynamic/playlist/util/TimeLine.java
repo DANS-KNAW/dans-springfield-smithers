@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
@@ -34,6 +35,7 @@ import org.dom4j.Node;
 import com.noterik.bart.fs.fsxml.FSXMLRequestHandler;
 
 public class TimeLine {
+	private static final Logger log = Logger.getLogger(TimeLine.class);
 
 	private Element _presentation = null;
 	private List oldnodes = new ArrayList<Node>();
@@ -46,43 +48,43 @@ public class TimeLine {
 	
 	private void mapAllEvents(Element pr) {
 		Element pl = (Element) pr.selectSingleNode("videoplaylist");
-		//System.out.println("PLNODE="+pl);
+		//log.debug("PLNODE="+pl);
 		//sometimes a presentation on accident doesn't have an videoplaylist
 		if (pl == null) {
 			return;
 		}
 		for(Iterator<Node> iter = pl.elements().iterator(); iter.hasNext(); ) {
 			Element node = (Element) iter.next();
-			//System.out.println("NODE NAME="+node.getName());
+			//log.debug("NODE NAME="+node.getName());
 			if (!node.getName().equals("video") && !node.getName().equals("properties")) {
 				oldnodes.add(node);
-				//System.out.println("N="+node.asXML());
+				//log.debug("N="+node.asXML());
 			}
 		}
-		//System.out.println("OLDNODES="+oldnodes.size());	
+		//log.debug("OLDNODES="+oldnodes.size());
 	}
 	
 	public void remapEvents(float starttime,float duration,float gap) {
-		//System.out.println("S="+starttime+" D="+duration+" G="+gap);
+		//log.debug("S="+starttime+" D="+duration+" G="+gap);
 		
 		for(Iterator<Node> iter = oldnodes.iterator(); iter.hasNext(); ) {
 			Element node = (Element) iter.next();
 			float nstart = Float.valueOf(node.selectSingleNode("properties/starttime").getText());
 			float ndur = Float.valueOf(node.selectSingleNode("properties/duration").getText());
 
-			//System.out.println("NSTART="+nstart+" DUR="+ndur+" NAME="+node.getName());
+			//log.debug("NSTART="+nstart+" DUR="+ndur+" NAME="+node.getName());
 			
 			// is the node in the range of the remap ?
 			if (nstart<starttime) {
 				Element newnode = (Element)node.clone();
 				// it start before the gap so move start
 				newnode.selectSingleNode("properties/starttime").setText(""+(nstart-gap));	
-				//System.out.println("MOVE START="+node.getName());
+				//log.debug("MOVE START="+node.getName());
 				// is the end also before it ?
 				if (starttime<(nstart+ndur)) {
-					System.out.println("END ALSO BEFORE");
+					log.debug("END ALSO BEFORE");
 				} else {
-					System.out.println("END IS IN THE BLOCK");
+					log.debug("END IS IN THE BLOCK");
 				}
 				
 			}
@@ -98,10 +100,10 @@ public class TimeLine {
 					newnode.selectSingleNode("properties/starttime").setText(""+(nstart-gap));
 				} else {
 					newnode.selectSingleNode("properties/starttime").setText(""+(nstart-gap));
-					System.out.println("NEWDUR="+node.getName()+" "+((nstart+ndur)-(starttime+duration)));
+					log.debug("NEWDUR="+node.getName()+" "+((nstart+ndur)-(starttime+duration)));
 					newnode.selectSingleNode("properties/duration").setText(""+((nstart+ndur)-(starttime+duration)));
 				}
-				//System.out.println("NEWNODE="+newnode.asXML());	
+				//log.debug("NEWNODE="+newnode.asXML());
 				newnodes.add(newnode);
 			}
 			*/
@@ -110,13 +112,13 @@ public class TimeLine {
 	
 	public void remapVideoEvents(Element fsxml) {
 		Element pl = (Element) _presentation.selectSingleNode("videoplaylist");
-		//System.out.println("PLNODE="+pl);
+		//log.debug("PLNODE="+pl);
 		float offset = 0;
 		int mapcounter = 0;
 		for(Iterator<Node> iter = pl.elements().iterator(); iter.hasNext(); ) {
 			Element node = (Element) iter.next();
 			if (node.getName().equals("video")) {
-				//System.out.println("V1="+node.asXML());
+				//log.debug("V1="+node.asXML());
 				float starttime = 0f;
 				if (node.selectSingleNode("properties/starttime")!=null && !node.selectSingleNode("properties/starttime").getText().equals("")) {
 					starttime = Float.valueOf(node.selectSingleNode("properties/starttime").getText());
@@ -126,7 +128,7 @@ public class TimeLine {
 					duration = Float.valueOf(node.selectSingleNode("properties/duration").getText());
 				}
 				String referid = node.attributeValue("referid");
-				//System.out.println("XMLL="+fsxml.asXML());
+				//log.debug("XMLL="+fsxml.asXML());
 				Element videonode = (Element) fsxml.selectSingleNode("video[@fullid='"+referid+"']");
 				
 				//error case, but sometimes occurs
@@ -135,7 +137,7 @@ public class TimeLine {
 				}
 				
 				//Element videonode = (FSXMLRequestHandler.instance().getNodeProperties(referid,true)).getRootElement().element("video");
-				//System.out.println("VID="+referid);
+				//log.debug("VID="+referid);
 					
 				for(Iterator<Node> viter = videonode.elements().iterator(); viter.hasNext(); ) {
 					Element lnode = (Element) viter.next();
@@ -157,7 +159,7 @@ public class TimeLine {
 								nd= Float.valueOf(nnode.selectSingleNode("properties/duration").getText());
 							} catch (Exception e) { /* ignore */ }
 						}
-						//System.out.println("LN="+lnode.getName()+" "+lnode.asXML());
+						//log.debug("LN="+lnode.getName()+" "+lnode.asXML());
 						//these are our defaults, no need to shift if these are the same
 						float defaultDuration = 999999999f;
 						if (Float.compare(ns, nd) == 0 && Float.compare(ns, starttime) == 0 && Float.compare(duration, defaultDuration) == 0) {
@@ -175,9 +177,9 @@ public class TimeLine {
 									nnode.selectSingleNode("properties/starttime").setText(""+newstart);
 								} catch (Exception e) { /* ignore */ }
 							} else {
-								//System.out.println("LN="+lnode.getName()+" "+lnode.asXML());
-								//System.out.println("NEED CUT "+ns+" "+nd+" "+starttime+" "+duration+" "+newstart);
-								//System.out.println("NEW DUR "+((ns+nd)-(starttime+duration)));
+								//log.debug("LN="+lnode.getName()+" "+lnode.asXML());
+								//log.debug("NEED CUT "+ns+" "+nd+" "+starttime+" "+duration+" "+newstart);
+								//log.debug("NEW DUR "+((ns+nd)-(starttime+duration)));
 								try {
 									nnode.selectSingleNode("properties/starttime").setText(""+newstart);	
 									nnode.selectSingleNode("properties/duration").setText(""+((ns+nd)-(starttime+duration)));
@@ -191,7 +193,7 @@ public class TimeLine {
 				offset += duration; // shift the offset so all the events of the next video are shifted
 			}
 		}
-		//System.out.println("MAPCOUNTER="+mapcounter);
+		//log.debug("MAPCOUNTER="+mapcounter);
 	}
 	
 	public void insertNode(Element node) {
@@ -201,13 +203,13 @@ public class TimeLine {
 	
 	public void remapOldEvents() {
 		Element pl = (Element) _presentation.selectSingleNode("videoplaylist");
-		//System.out.println("PLNODE="+pl);
+		//log.debug("PLNODE="+pl);
 		float offset = 0;
 		int mapcounter = 0;
 		for(Iterator<Node> iter = pl.elements().iterator(); iter.hasNext(); ) {
 			Element node = (Element) iter.next();
 			if (node.getName().equals("video")) {
-				//System.out.println("V1="+node.asXML());
+				//log.debug("V1="+node.asXML());
 				float starttime = 0;
 				if (node.selectSingleNode("properties/starttime")!=null && !node.selectSingleNode("properties/starttime").getText().equals("")) {
 					starttime = Float.valueOf(node.selectSingleNode("properties/starttime").getText());
@@ -229,7 +231,7 @@ public class TimeLine {
 							try {
 								ns= Float.valueOf(nnode.selectSingleNode("properties/starttime").getText());
 							} catch (Exception e) {
-								//System.out.println("NS="+nnode.selectSingleNode("properties/starttime").getText());
+								//log.debug("NS="+nnode.selectSingleNode("properties/starttime").getText());
 								//e.printStackTrace();
 							}
 						} else {
@@ -262,8 +264,8 @@ public class TimeLine {
 								// yes no need to cut
 								nnode.selectSingleNode("properties/starttime").setText(""+newstart);	
 							} else {
-								//System.out.println("LN="+lnode.getName()+" "+lnode.asXML());
-								//System.out.println("NEED CUT "+ns+" "+nd+" "+starttime+" "+duration+" "+newstart);
+								//log.debug("LN="+lnode.getName()+" "+lnode.asXML());
+								//log.debug("NEED CUT "+ns+" "+nd+" "+starttime+" "+duration+" "+newstart);
 								//System.out.println("NEW DUR "+(nd-((ns+nd)-(starttime+duration))));	
 								nnode.selectSingleNode("properties/starttime").setText(""+newstart);	
 								nnode.selectSingleNode("properties/duration").setText(""+(nd-((ns+nd)-(starttime+duration))));			

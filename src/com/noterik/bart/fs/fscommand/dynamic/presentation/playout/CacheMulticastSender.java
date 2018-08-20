@@ -25,8 +25,10 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 
 import com.noterik.bart.fs.LazyHomer;
+import org.apache.log4j.Logger;
 
 public class CacheMulticastSender {
+	private static final Logger log = Logger.getLogger(CacheMulticastSender.class);
 	
 	static String group = "224.0.0.0";
 	static int ttl = 1;
@@ -35,13 +37,13 @@ public class CacheMulticastSender {
 		try {
 			MulticastSocket s = new MulticastSocket();
 			String msg = adr+" "+method+" "+imsg+" "+LazyHomer.getPort();
-			//System.out.println("SENDING=> "+msg);
+			//log.debug("SENDING=> "+msg);
 			byte[] buf = msg.getBytes();
 			DatagramPacket pack = new DatagramPacket(buf, buf.length,InetAddress.getByName(group), LazyHomer.getPort());
 			s.send(pack,(byte)ttl);
 			s.close();
 		} catch(Exception e) {
-			System.out.println("Smithers : multicast sender error");
+			log.debug("Smithers : multicast sender error");
 		}
 	}
 

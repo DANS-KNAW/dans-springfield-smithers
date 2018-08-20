@@ -25,6 +25,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Iterator;
 
+import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.restlet.ext.xml.DomRepresentation;
@@ -35,6 +36,7 @@ import org.restlet.representation.StringRepresentation;
 import com.noterik.bart.fs.fsxml.FSXMLRequestHandler;
 
 public class CacheTableReader extends Thread {
+	private static final Logger log = Logger.getLogger(CacheTableReader.class);
 	
 	private boolean loaded = false;
 	private volatile boolean running = true;
@@ -54,13 +56,13 @@ public class CacheTableReader extends Thread {
 			if (pos!=-1) hostname=hostname.substring(pos+1);
 			Document cacheXml = FSXMLRequestHandler.instance().getNodeProperties("/domain/webtv/tmp/cache/dataset/"+hostname, false);
 			if (cacheXml!=null) {
-				System.out.println("Reader cache tables "+cacheXml.asXML());
+				log.debug("Reader cache tables "+cacheXml.asXML());
 				Element p = (Element) cacheXml.selectSingleNode("/fsxml/dataset[@id='"+hostname+"']/properties/list");
 				if (p!=null) {
 					
 					String list[] = p.getText().split(",");
 					for(int i=0;i<list.length;i++) {
-						System.out.println("ITEM ("+(i+1)+")="+list[i]);
+						log.debug("ITEM ("+(i+1)+")="+list[i]);
 						Document result = null;
 						String key = list[i];
 						key = key.replace(";", ",");
@@ -72,7 +74,7 @@ public class CacheTableReader extends Thread {
 							try {
 								String params = key.substring(cpos+1);
 								params = params.substring(0,params.length()-1);
-								//System.out.println("P1="+params);
+								//log.debug("P1="+params);
 								String[] pa = params.split(",");
 								String pb = "<fsxml><properties>";
 								for (int pi=0;pi<pa.length;pi++) {
@@ -83,14 +85,14 @@ public class CacheTableReader extends Thread {
 									pb+="<"+name+">"+value+"</"+name+">";
 								}
 								pb+="</properties></fsxml>";
-								System.out.println("PB="+pb);
+								log.debug("PB="+pb);
 								result = FSXMLRequestHandler.instance().handleDocGET(key.substring(0,cpos), pb);
 
 							} catch(Exception ee) {
-								System.out.println("ERROR WE NEED TO LOOK AT DANIEL");
+								log.debug("ERROR WE NEED TO LOOK AT DANIEL");
 							}
-							//System.out.println("RSULT="+result);
-							//System.out.println("EEEE="+key.substring(0,cpos)+" R="+key.substring(cpos));
+							//log.debug("RSULT="+result);
+							//log.debug("EEEE="+key.substring(0,cpos)+" R="+key.substring(cpos));
 							
 							if (result!=null) cache.putParams(key.substring(0,cpos), result, key.substring(cpos));							
 						}
@@ -98,15 +100,15 @@ public class CacheTableReader extends Thread {
 					}
 					loaded = true;
 				}
-				System.out.println("Reader cache tables loaded size="+cache.getCacheSize());	
+				log.debug("Reader cache tables loaded size="+cache.getCacheSize());
 
 			} else {
 				loaded = true;
-				System.out.println("Reader cache tables empty");
+				log.debug("Reader cache tables empty");
 			}
 
 		} catch(Exception e) {
-			System.out.println("Can't sleep in CacheTableReader "+e);
+			log.debug("Can't sleep in CacheTableReader "+e);
 		}
 		loaded = true;
 	}

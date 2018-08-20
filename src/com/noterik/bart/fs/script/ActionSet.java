@@ -398,7 +398,7 @@ public class ActionSet implements Serializable{
 	
 	public void destroy() {
 		for (Timer timer : timerConditions) {
-			System.out.println("Smithers: destroying timer script");
+			System.out.println("destroying timer script");
 			removeTimerCondition(timer);
 		}
 	}

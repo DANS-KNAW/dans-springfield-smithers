@@ -38,11 +38,11 @@ import com.noterik.springfield.tools.fs.URIParser;
 
 public class flash implements DynamicCommand {
 	/** Logger */
-	private static Logger logger = Logger.getLogger(flash.class);
+	private static Logger log = Logger.getLogger(flash.class);
 
 	public synchronized String run(String uri,String xml) {
-		logger.debug("start dynamic/presentation/playout/flash");
-		logger.debug("qpr url="+uri);
+		log.debug("start dynamic/presentation/playout/flash");
+		log.debug("qpr url="+uri);
 		long timer_start = new Date().getTime();
 		Document returnXml = DocumentHelper.createDocument();
 		Element fsxml = returnXml.addElement("fsxml");
@@ -62,10 +62,10 @@ public class flash implements DynamicCommand {
 				try {
 					handlerparams = (Element) DocumentHelper.parseText(xml).getRootElement();
 				} catch(Exception docerror) {
-					logger.error("invalid parameters in xml");
+					log.error("invalid parameters in xml");
 				}
 			} else {
-				logger.error("invalid virtual path");			
+				log.error("invalid virtual path");
 			}
 		}
 					
@@ -89,30 +89,30 @@ public class flash implements DynamicCommand {
 		String collection = uri.substring(uri.indexOf("/collection/")+12, uri.indexOf("/presentation/"));
 		conf.setCollection(collection);
 			
-		logger.debug("presentation "+uri+" domain "+domain+" user "+user+" collection "+collection);
+		log.debug("presentation "+uri+" domain "+domain+" user "+user+" collection "+collection);
 			
 		Node presentationXml = getPresentation(uri);
 		if (presentationXml != null) {
 			fsxml.add(presentationXml);
-			logger.debug("past presentation xml");
+			log.debug("past presentation xml");
 			List<Element> videos = addVideos(presentationXml);
 			for (int i = 0; i < videos.size(); i++) {
 				fsxml.add(videos.get(i));
 			}
-			logger.debug("past adding video(s)");
+			log.debug("past adding video(s)");
 		}
 		Node presentationConfig = getPresentationConfig(uri, presentationXml, conf);
 
 		if (presentationConfig != null) {
 			fsxml.add(presentationConfig);
-			logger.debug("past presentation config");
+			log.debug("past presentation config");
 			
 			List<Element> players = addPlayer(presentationConfig);			
 			for (int j = 0; j < players.size(); j++) {
 				fsxml.add(players.get(j));
 			}
 		}			
-		logger.debug("past adding player(s)");		
+		log.debug("past adding player(s)");
 		
 		// moved the remapping of the presentation so we already have the video nodes.
 		// Warning: This relies on the corrected presentation config (sponsor/user/collection level
@@ -124,12 +124,12 @@ public class flash implements DynamicCommand {
 			fsxml.add(collectionConfig);
 		}
 			
-		logger.debug("past collection config");
+		log.debug("past collection config");
 		
-		logger.debug("end dynamic/presentation/playout/flash");
+		log.debug("end dynamic/presentation/playout/flash");
 			
 		long timer_end = new Date().getTime();
-		System.out.println("GENTIME="+(timer_end-timer_start)+" CACHE AT "+cache.getPerformance()+"% req="+cache.getTotalRequest()+" size="+cache.getCacheSize()+" URI="+uri);
+		log.debug("GENTIME="+(timer_end-timer_start)+" CACHE AT "+cache.getPerformance()+"% req="+cache.getTotalRequest()+" size="+cache.getCacheSize()+" URI="+uri);
 		return fsxml.asXML();
 	}
 
@@ -137,28 +137,28 @@ public class flash implements DynamicCommand {
 		Document tmpConf = null;		
 
 		// domain conf
-		logger.debug("before domain conf");
+		log.debug("before domain conf");
 		String url = "/domain/"+c.getDomain()+"/config/presentation/filesystem/1";
 		Document conf = cache.get(url);
 		if (conf==null) {
 			conf = FSXMLRequestHandler.instance().getNodeProperties(url, false);
 			cache.put(url, conf);
 		}
-		logger.debug("after domain conf");
+		log.debug("after domain conf");
 		Boolean allowReplace = conf.selectSingleNode("/fsxml/filesystem[@id='1']/properties/allow_replace") == null ? false : Boolean.valueOf(conf.selectSingleNode("/fsxml/filesystem[@id='1']/properties/allow_replace").getText());
 		
 		//check if presentation has a sponsor, take his config
 		String sponsor = presentationXml.selectSingleNode("//presentation/properties/sponsor") == null ? null : presentationXml.selectSingleNode("//presentation/properties/sponsor").getText();
 		if (sponsor != null) {
-			logger.debug("found sponsor in presentation = "+sponsor);
+			log.debug("found sponsor in presentation = "+sponsor);
 			// sponsor conf
-			logger.debug("before sponsor conf");
+			log.debug("before sponsor conf");
 			tmpConf = cache.get(url);
 			if (tmpConf==null && !cache.isEmpty(sponsor+"/config/presentation/filesystem/1")) {
 				tmpConf = FSXMLRequestHandler.instance().getNodeProperties(sponsor+"/config/presentation/filesystem/1", false);	
 				cache.put(sponsor+"/config/presentation/filesystem/1",tmpConf);
 			}
-			logger.debug("after sponsor conf");
+			log.debug("after sponsor conf");
 			
 			if (tmpConf != null && (conf == null || !allowReplace)) {
 				conf = tmpConf;
@@ -171,13 +171,13 @@ public class flash implements DynamicCommand {
 		}
 		
 		// user conf
-		logger.debug("before user conf");
+		log.debug("before user conf");
 		tmpConf = cache.get("/domain/"+c.getDomain()+"/user/"+c.getUser()+"/config/presentation/filesystem/1");
 		if (tmpConf==null && !cache.isEmpty("/domain/"+c.getDomain()+"/user/"+c.getUser()+"/config/presentation/filesystem/1")) {
 			tmpConf = FSXMLRequestHandler.instance().getNodeProperties("/domain/"+c.getDomain()+"/user/"+c.getUser()+"/config/presentation/filesystem/1", false);	
 			cache.put("/domain/"+c.getDomain()+"/user/"+c.getUser()+"/config/presentation/filesystem/1", tmpConf);
 		}	
-		logger.debug("after sponsor conf");
+		log.debug("after sponsor conf");
 		
 		if (tmpConf != null && (conf == null || !allowReplace)) {
 			conf = tmpConf;
@@ -189,13 +189,13 @@ public class flash implements DynamicCommand {
 		}
 
 		// user collection conf
-		logger.debug("before collection conf");
+		log.debug("before collection conf");
 		tmpConf = cache.get("/domain/"+c.getDomain()+"/user/"+c.getUser()+"/collection/"+c.getCollection()+"/config/presentation/filesystem/1");
 		if (tmpConf==null && !cache.isEmpty("/domain/"+c.getDomain()+"/user/"+c.getUser()+"/collection/"+c.getCollection()+"/config/presentation/filesystem/1")) {
 			tmpConf = FSXMLRequestHandler.instance().getNodeProperties("/domain/"+c.getDomain()+"/user/"+c.getUser()+"/collection/"+c.getCollection()+"/config/presentation/filesystem/1", false);
 			cache.put("/domain/"+c.getDomain()+"/user/"+c.getUser()+"/collection/"+c.getCollection()+"/config/presentation/filesystem/1", tmpConf);
 		}
-		logger.debug("after collection conf");
+		log.debug("after collection conf");
 		
 		if (tmpConf != null) {
 			String refer = tmpConf.selectSingleNode("/fsxml/filesystem/@referid") == null ? "" : tmpConf.selectSingleNode("/fsxml/filesystem/@referid").getText();
@@ -220,13 +220,13 @@ public class flash implements DynamicCommand {
 		List<Node> includeNodes = tmpConf.selectNodes("/fsxml/filesystem[@id='1']/*[@id and not(ends-with(@id,'_exclude'))]");
 		List<Node> excludeNodes = tmpConf.selectNodes("/fsxml/filesystem[@id='1']/*[ends-with(@id,'_exclude')]");
 		
-		logger.debug("number of includeNodes = "+includeNodes.size());
+		log.debug("number of includeNodes = "+includeNodes.size());
 		for (int j = 0; j < includeNodes.size(); j++) {
-			logger.debug(j+" = "+includeNodes.get(j).toString());
+			log.debug(j+" = "+includeNodes.get(j).toString());
 		}
-		logger.debug("number of excludeNodes = "+excludeNodes.size());
+		log.debug("number of excludeNodes = "+excludeNodes.size());
 		for (int j = 0; j < excludeNodes.size(); j++) {
-			logger.debug(j+" = "+excludeNodes.get(j).toString());
+			log.debug(j+" = "+excludeNodes.get(j).toString());
 		}
 		
 		Element base = (Element) conf.selectSingleNode("/fsxml/filesystem[@id='1']");
@@ -236,11 +236,11 @@ public class flash implements DynamicCommand {
 				String nodename = includeNodes.get(i).getName();					
 				String nodeid = includeNodes.get(i).valueOf("@id");
 				
-				logger.debug("check if node exists "+nodename+" id "+nodeid);
+				log.debug("check if node exists "+nodename+" id "+nodeid);
 				
 				Node existingNode = base.selectSingleNode(nodename+"[@id='"+nodeid+"']");
 				if (existingNode != null) {
-					logger.debug("node exists, replace");
+					log.debug("node exists, replace");
 					List contentOfBase = base.content();
 					int index = contentOfBase.indexOf(existingNode);
 					contentOfBase.set(index, includeNodes.get(i).detach());
@@ -251,18 +251,18 @@ public class flash implements DynamicCommand {
 		}
 		
 		if (excludeNodes != null) {
-			logger.debug("handling exclude nodes for user");
+			log.debug("handling exclude nodes for user");
 			for (int i = 0; i < excludeNodes.size(); i++) {
-				logger.debug("handling exclude node nr "+i);
+				log.debug("handling exclude node nr "+i);
 				String nodename = excludeNodes.get(i).getName();					
 				String nodeid = excludeNodes.get(i).valueOf("@id");					
 				nodeid = nodeid.substring(0, nodeid.lastIndexOf("_exclude"));
 				
-				logger.debug("about to exclude "+nodename+" with id "+nodeid);
+				log.debug("about to exclude "+nodename+" with id "+nodeid);
 				
 				Node remove = base.selectSingleNode(nodename+"[@id='"+nodeid+"']");
 				if (remove != null) {
-					logger.debug("node to exclude found, detach");
+					log.debug("node to exclude found, detach");
 					remove.detach();
 				}
 			}
@@ -299,7 +299,7 @@ public class flash implements DynamicCommand {
 		Document conf = cache.get(url);
 		if (conf==null && !cache.isEmpty(url)) {
 			conf = FSXMLRequestHandler.instance().getNodeProperties(url, false);
-			//System.out.println("CONF (Needs fix daniel)="+conf+" R="+cache.isEmpty(url));
+			//log.debug("CONF (Needs fix daniel)="+conf+" R="+cache.isEmpty(url));
 			cache.put(url, conf);
 		}
 		
@@ -344,13 +344,13 @@ public class flash implements DynamicCommand {
 		String selectedplaylist = conf.getSelectedPlaylist();
 		Element handlerparams = conf.getHandlerParams();
 		if (domainvpconfig!=null) {
-			logger.debug("vp config = "+domainvpconfig.asXML());
+			log.debug("vp config = "+domainvpconfig.asXML());
 			// so lets see if we have a forward
 			String forward = domainvpconfig.selectSingleNode("properties/forward") == null ? "" : domainvpconfig.selectSingleNode("properties/forward").getText();
-			logger.debug("forward = "+forward);
+			log.debug("forward = "+forward);
 			if (selectedplaylist=="" && forward!=null && forward!="") {
 				selectedplaylist = forward;
-				logger.debug("selected playlist = "+selectedplaylist);
+				log.debug("selected playlist = "+selectedplaylist);
 			}
 		}
 		
@@ -367,7 +367,7 @@ public class flash implements DynamicCommand {
 			Element video = (Element) iter.next();
 			
 			String refer = video.selectSingleNode("@referid") == null ? "" : video.selectSingleNode("@referid").getText();
-			logger.debug("getting video "+refer);
+			log.debug("getting video "+refer);
 			if (!refer.equals("") && !refers.contains(refer)) {
 				refers.add(refer);
 				Document videoXml = cache.get(refer);
@@ -378,7 +378,7 @@ public class flash implements DynamicCommand {
 				if (videoXml != null) {
 					Element vid = (Element) videoXml.selectSingleNode("fsxml/video").detach();
 					vid.addAttribute("fullid", refer);
-					//System.out.println("U="+vid.asXML());
+					//log.debug("U="+vid.asXML());
 					vids.add(vid);
 				}
 			}
